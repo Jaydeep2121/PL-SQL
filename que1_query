@@ -1,0 +1,157 @@
+============================================================================================
+			1. SIMPLE QUERIES (INVOLVING ONLY ONE TABLE):
+============================================================================================
+[1] List details of all the employees.
+	select * from emp;
+
+[2] List number and name of all the employees.
+	select emp_no,emp_name from emp;
+
+[3] List number, name, job & salary of all the employees
+	select emp_no,emp_name,emp_job,emp_salary from emp;
+
+[4] List details of employees whose salary is more than 2000.
+	select * from emp where emp_salary>2000;
+
+[5] List details of orders where order amount is more than 1000
+	select * from ordertbl where ord_totl_amt>1000;
+
+[6] List details of customers from the state CA.
+	select * from customer where cust_state like 'CA';
+
+[7] List details of departments that are located in NEW YORK
+	select * from dept where dept_loc='new york';
+
+[8] List details of departments that are located in either NEW YORK or BOSTON.
+	select * from dept where dept_loc='new york' or dept_loc='bostan';
+
+[9] List details of departments that are located in neither NEW YORK nor BOSTON.
+	select * from dept where dept_loc <> 'new york' and dept_loc <> 'bostan';
+
+[10] List details of employees of DEPTNO 20.
+	select * from emp where dept_no=20;
+
+[11] List details of employees of DEPTNOs 10 & 20
+	select * from emp where dept_no=10 or dept_no=20;
+
+[12] List details of employees of DEPTNOs 10, 20 & 30.
+	select * from emp where dept_no=10 or dept_no=20 or dept_no=30;
+
+[13] List details of employees having commission greater than 60% of their salary.
+	select * from emp where emp_comm > (emp_salary*0.60);
+
+[14] List details of all CLERKs.
+	select * from emp where emp_job='clerk';
+
+[15] List details of all CLERKs of DEPTNO 20.
+	select * from emp where emp_job='clerk' and dept_no=20;
+
+[16] List details of all CLERKs of DEPTNOs 10 & 20.
+	select * from emp where emp_job='clerk' and (dept_no=20 or dept_no=10);
+
+[17] List details of all CLERKs, ANALYSTs, SALESMAN and MANAGERs.
+	select * from emp where emp_job='clerk' or emp_job='analyst' or emp_job='salesman' or emp_job='manager';
+
+[18] List details of employees whose name starts with the alphabet ‘A’.
+	select * from emp where emp_name like 'A%' or emp_name like 'a%';
+
+[19] List details of employees whose name does not start with the alphabet ‘A’.
+	select * from emp where emp_name not like 'a%';
+
+[20] List details of employees whose name contains the alphabet ‘A’ at the second position	
+	select * from emp where emp_name like '_a%' or emp_name like '_A%';
+
+[21] List details of employees whose name contains the alphabet ‘A’ at any position.
+	select * from emp where emp_name like '%a%' or emp_name like '%A%';
+
+[22] List details of employees that contain the string ‘AM’ in their names.
+	select * from emp where emp_name like '%am%' or emp_name like '%AM%';
+
+[23] List details of employees who are not assigned any commission.
+	select * from emp where emp_comm is null;
+
+[24] List details of orders which are not having any commission plan.
+	select * from ordertbl where ord_comi_plan is null;	
+
+[25] List details of orders which are having some commission plan.
+	select * from ordertbl where ord_comi_plan is not null;
+
+[26] List details of employees who are drawing salary >= 2000 and <= 4000.
+	select * from emp where emp_salary >=2000 and emp_salary <=4000;
+
+[27] List EMPNO, ENAME, JOB and total earnings of all employees. (Note: an employee earns in the form of SALary and COMMission)
+	select emp_no,emp_name,emp_job,(emp_salary+nvl(emp_comm,0)) as "total_earning" from emp;
+	(or)
+	select emp_no,emp_name,emp_job,(emp_salary+coalesce(emp_comm,0)) as "total_earning" from emp;	
+
+[28] List details of customers whose name contains 2 or more words.
+	select * from customer where cust_name like '%%';
+	(or)
+	select * from customer where cust_name like '__' or cust_name like '%';
+
+[29] List details of employees in ascending order of their names.
+	select * from emp order by emp_name asc;	
+
+[30] List department-wise, salary-wise details of all employees. (Both, DEPTNO and SAL, in Ascending order)
+	select * from emp order by dept_no asc,emp_salary asc;	
+
+[31] List department-wise, salary-wise details of all employees. (where DEPTNO-Ascending order & SALDescending order)
+	select * from emp order by dept_no asc,emp_salary desc;
+
+[32] List department-wise, salary-wise details of all employees. (Both, DEPTNO and SAL, in Descending order)
+	select * from emp order by dept_no desc,emp_salary desc;
+
+[33] List details of orders in ascending order of their order amount.
+	select * from ordertbl order by ord_totl_amt asc;	
+
+[34] List details of orders which are not having any commission plan in descending order of their order amount.
+	select * from ordertbl where ord_comi_plan is null order by ord_totl_amt desc;
+	
+[35] List details of employees of DEPTNO 10 in ascending order of their salary.
+	select * from emp where dept_no=10 order by emp_salary asc;
+	
+[36] List all JOBs from the EMP table.
+	select distinct emp_job from emp;
+
+[37] List all PRODIDs that were ordered at least once.
+	select count(ord_id) as "count",prod_id 
+	from item 
+	group by prod_id
+	having count(ord_id)>=1;
+		
+[38] List details of all customers in descending order of their creditlimits.
+	select * from customer 
+	order by cust_credit_limit desc;
+
+[39] List details of all orders in the order in which they were ordered.
+	select * from ordertbl
+	order by ord_date;	
+
+[40] List details of all employees in descending order of their earnings. (Note: an employee earns in the form of SALary and COMMission)
+	select emp_no,emp_name,emp_job,emp_hire_date,emp_mgr,dept_no,(emp_salary+nvl(emp_comm,0)) as "total_earn" 
+	from emp order by (emp_salary+nvl(emp_comm,0)) desc;	
+
+[41] List details of all CLERKs in descending order of their earnings. (Note: an employee earns in the form of SALary and COMMission)
+	select emp_job,(emp_salary+nvl(emp_comm,0)) as "total_earning"
+	from emp where emp_job='clerk'
+	order by (emp_salary+nvl(emp_comm,0)) desc;	
+(or)
+	select emp_job,(emp_salary+nvl(emp_comm,0)) as "total_earning"
+	from emp where emp_job='clerk'
+	order by "total_earning" desc;
+
+[42] List details of all employees in descending order of their experience.
+	select * from emp 
+	order by emp_hire_date asc;
+
+[43] List EMPNO, ENAME, JOB and their experience in years (rounded to 0 digits in decimal place).
+	select emp_no,emp_name,emp_job,trunc(sysdate) today, to_char	(trunc(months_between(sysdate,emp_hire_date)/12)) || ' years ' || to_char(mod(trunc(months_between(sysdate,emp_hire_date)),12)) || ' months ' || to_char(trunc(sysdate) -add_months(emp_hire_date,trunc(months_between(sysdate,emp_hire_date)))) || ' days' "Experience" from emp;
+
+(or)
+
+	select emp_no,emp_name,round(sysdate-emp_hire_date) "exp",job from emp order by emp desc;
+
+
+
+
+
