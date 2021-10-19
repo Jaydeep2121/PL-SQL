@@ -1,0 +1,136 @@
+/*
+===========================================================
+	DEPT: Department Table. PRIMARY KEY: DEPTNO
+===========================================================
+DEPTNO : Department Number.(Primary Key)      NUMBER(2)
+DNAME  : Department Name.                     CHAR(14)
+LOC    : Location of the Department.          CHAR(13)
+-----------------------------------------------------------
+create table dept(
+dept_no number primary key not null,
+dept_name varchar2(14) not null,
+dept_loc varchar2(13) not null
+);
+===========================================================
+
+
+===========================================================
+	EMP: Employee Table. PRIMARY KEY: EMPNO
+===========================================================
+EMPNO : Employee Number. (Primary Key) 		NUMBER(4)
+ENAME : Employee Name. 				VARCHAR2(10)
+JOB   : Designation of the Employee. 		CHAR(9)
+MGR   : Number of the Employee’s Manager(Immediate Boss)
+		 				NUMBER(4)
+	(Foreign Key -> References EMP(EMPNO)).
+HIREDATE : Date of Joining. 			DATE
+SAL      : Salary. 				NUMBER(7,2)
+COMM     : Commission. 				NUMBER(7,2)
+DEPTNO   : Department Number 			NUMBER(2)
+	(Foreign Key -> References DEPT(DEPTNO))
+-----------------------------------------------------------
+create table emp(
+emp_no number primary key not null,
+emp_name varchar2(10) not null,
+emp_job varchar2(15) not null,
+emp_hire_date date not null,
+emp_salary number not null,
+emp_comm number,
+emp_mgr number references emp(emp_no),
+dept_no number references dept(dept_no)
+);
+=====================================================================
+
+
+=====================================================================
+	CUSTOMER: Customer Table. PRIMARY KEY: CUSTID
+=====================================================================
+CUSTID   : Customer Identification Number(Primary Key) 	NUMBER(6)
+NAME     : Customer Name. 				VARCHAR2(45)
+ADDRESS  : Address of the Customer		     	CHAR(40)
+CITY     : City of the Customer. 			CHAR(30)
+STATE    : State. 					CHAR(2)
+ZIP      : Zip Code. 					CHAR(9)
+AREA     : Area Code. 					NUMBER(3)
+PHONE    : Phone Number. 				CHAR(9)
+REPID    : Representative Identification Number.	NUMBER(4)
+	(Foreign Key -> References EMP(EMPNO)).
+CREDITLIMIT : Credit Limit given to the customer. 	NUMBER(9,2)
+COMMENTS    : Comments (if any). 			LONG
+---------------------------------------------------------------------
+create table customer(
+cust_id number primary key not null,
+cust_name varchar2(45) not null,
+cust_address varchar2(40) not null,
+cust_city varchar2(30) not null,
+cust_state varchar2(4) not null,
+cust_zip varchar(9) not null,
+cust_area number not null,
+cust_phone varchar2(10) not null,
+cust_credit_limit number not null,
+cust_comnt long,
+cust_repid number references emp(emp_no) not null
+);
+=====================================================================
+
+
+=====================================================================
+	ORD: Order Table. PRIMARY KEY: ORDID
+=====================================================================
+ORDID     : Order Identification Number(Primary Key) 	NUMBER(4)
+ORDERDATE : Order Date. 				DATE
+COMMPLAN  : Commission Plan (if any). 			CHAR(1)
+CUSTID    : Customer Identification Number. 		NUMBER(6)
+		(Foreign Key -> References CUSTOMER(CUSTID))
+SHIPDATE  : Shipment Date. 				DATE
+TOTAL     : Total Order Amount. 			NUMBER(8,2)
+----------------------------------------------------------------------
+create table ordertbl(
+ord_id number not null,
+ord_date date not null,
+ord_comi_plan char(1),
+ord_ship_date date not null,
+ord_totl_amt number not null,
+constraint ordertbl_pk primary key(ord_id),
+cust_id number references customer(cust_id) not null
+);
+=====================================================================
+
+
+=====================================================================
+	PRODUCT	: Product Table. PRIMARY KEY: PRODID
+=====================================================================
+PRODID  : Product Identification Number. (Primary Key)	NUMBER(6)
+DESCRIP : Product Description. 				CHAR(30)
+----------------------------------------------------------------------
+create table product(
+prod_id number not null,
+prod_desc varchar2(30) not null,
+constraint product_pk primary key(prod_id)
+);
+=====================================================================
+
+
+=========================================================================
+	ITEM: Item Table. PRIMARY KEY: (ORDID, ITEMID)
+=========================================================================
+ORDID  	    : Order Identification Number. 			NUMBER(4)
+		(Foreign Key -> References ORD(ORDID)).
+ITEMID      : Item Id. (Serial Number in each order). 		NUMBER(4)
+PRODID      : Product Identification Number. 			NUMBER(6)
+	        (Foreign Key -> References PRODUCT(PRODID)).
+ACTUALPRICE : Actual Price of the product ordered. 		NUMBER(8,2)
+QTY 	    : Quantity of the product ordered. 			NUMBER(8)
+ITEMTOT     : Total amount of the product. (QTY * ACTUALPRICE) 	NUMBER(8,2)
+--------------------------------------------------------------------------
+create table item(
+item_id number not null,
+item_act_price number(8,2) not null,
+item_qty number not null,
+item_tot number(8,2),
+ord_id number references ordertbl(ord_id),
+prod_id number references product(prod_id),
+primary key (ord_id,item_id)
+);
+=====================================================================
+*/
