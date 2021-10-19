@@ -1,0 +1,120 @@
+============================================================================================
+			4. QUERIES USING JOIN:
+============================================================================================
+[146] List employee number, employee name, department number and department name of all the employees.
+	select e.emp_no,e.emp_name,e.dept_no,d.dept_name
+	from emp e
+	inner join dept d on e.dept_no=d.dept_no;
+
+[147] List details of the employees of SALES department.
+	select *
+	from emp e
+	inner join dept d on e.dept_no=d.dept_no and d.dept_name='sales';
+
+[148] List details of the departments that have at least one employee.
+	select *
+	from dept 
+	where dept_name in(
+		select d.dept_name
+		from dept d
+		inner join emp e on d.dept_no=e.dept_no
+		group by d.dept_name
+		having count(*)>=1
+	);
+
+[149] List details of the employees of KING’s department.
+	select e.emp_no,e.emp_name,e.emp_job,e.emp_hire_date,e.emp_salary,e.emp_comm,e.emp_mgr,e.dept_no
+	from emp e
+	inner join emp ep on e.dept_no=ep.dept_no and ep.emp_name='king';
+
+[150] List details of the customers along with their representative’s name.
+	select cust_name,emp_name as representative
+	from customer
+	inner join emp on cust_repid=emp_no; 
+
+[151] List details of the employees of DEPTNO 20 having same job as that of JAMES.
+	select distinct e.emp_no,e.emp_name,e.emp_job,e.emp_hire_date,e.emp_salary,e.emp_comm,e.emp_mgr,e.dept_no
+	from emp e
+	inner join emp on e.dept_no=20 and e.emp_job=(select emp_job from emp where emp_name = 'james');
+
+[152] List employee no., employee name, manager’s no. & manager’s name of all the employees.
+	select distinct e.emp_name as Employee, m.emp_mgr as reports_to, m.emp_name as Manager
+	from emp e
+	inner join emp m on e.emp_mgr = m.emp_no;
+
+[153] List details of the employees who have at least one subordinate (i.e. they are managers of some
+      employee).
+	select m.emp_no,m.emp_name from emp e,emp m 
+	where m.emp_no=e.emp_mgr group by m.emp_no,m.emp_name;
+
+[154] List details of the employees who are earning more than their manager.
+	select e.emp_no,e.emp_name,e.emp_job,e.emp_hire_date,e.emp_salary,e.emp_comm,e.emp_mgr,e.dept_no
+	from emp e
+	inner join emp m on e.emp_mgr = m.emp_no and e.emp_salary+nvl(e.emp_comm,0) > m.emp_salary+nvl(m.emp_comm,0);
+
+[155] List details of the employees who joined before their manager joined.
+	select e.emp_no,e.emp_name,e.emp_job,e.emp_hire_date,e.emp_salary,e.emp_comm,e.emp_mgr,e.dept_no
+	from emp e
+	inner join emp m on e.emp_mgr = m.emp_no and e.emp_hire_date < m.emp_hire_date;
+
+[156] List details of employees of DEPTNO 10 having same job as an employee of SALES department.
+	select e.emp_no,e.emp_name,e.emp_job 
+	from emp e,emp m where m.emp_job=e.emp_job and m.emp_deptno like 10 and e.emp_deptno in 
+						(select dept_no from dept where dept_name like 'SALES') 
+						group by e.emp_no,e.emp_name,e.emp_job;						 
+
+[157] List details of employees of ACCOUNTING department having same job as an employee of SALES
+      department.
+	select e.emp_no,e.emp_name,e.emp_job from emp e,emp m 
+	where m.emp_job=e.emp_job and m.deptno in (select dept_no from dept where dept_name like 'ACCOUNTING') 
+	and e.dept_no in (select dept_no from dept where dept_name like 'SALES') 
+	group by e.emp_no,e.emp_name,e.emp_job;
+
+[158] List department details and total number of employees in each department.
+	select d.dept_no,count(*) no_of_emp
+	from dept d
+	inner join emp e on d.dept_no=e.dept_no
+	group by e.dept_no;	
+
+[159] List EMPNO, ENAME, JOB and number of subordinates of employees who have at least one
+      subordinate.
+		select e.emp_no,count(*)
+		from emp e
+		inner join emp ep on e.emp_no=ep.emp_mgr 
+		group by e.emp_no;
+	
+[160] List details of the employees (list only EMPNO, ENAME and JOB) who have at least three
+      subordinates.
+	select m.emp_no,m.emp_name,m.emp_job 
+	from emp e,emp m 
+	where m.emp_no=e.emp_mgr 
+	group by m.emp_no,m.emp_name,m.emp_job 
+	having count(e.emp_no)>=3;
+
+[161] List details of the employees who are manager of at least one employee but whose designation is not
+      MANAGER.
+	select m.emp_no,m.emp_name,m.emp_job 
+	from emp e,emp m 
+	where m.emp_no=e.emp_mgr and m.emp_job not in 'MANAGER' 
+	group by m.emp_no,m.emp_name,m.emp_job;
+
+[162] List details of the customers (list only CUSTID, NAME and CITY) along with their corresponding
+      representative’s details (list only EMPNO, ENAME and JOB).
+	select cust_id,cust_name,cust_city,emp_no,emp_name,emp_job 
+	from emp e,customer c where cust_repid=emp_no;
+
+[163] List details of the customers (list only CUSTID, NAME and CITY) who have placed more than three
+      orders.
+	select c.cust_id,cust_name,cust_city 
+	from customer c,ord o 
+	where c.cust_id=o.cust_id  
+	group by  c.cust_id,cust_name,cust_city  
+	having count(o.cust_id)>=3
+
+[164] List details of the employees that have at least one customer assigned to them and that at least one of
+      these customers has placed at least one order.
+	select e.emp_no,emp_name,emp_job 
+	from customer c,ord o,emp e 
+	where c.cust_id=o.cust_id and e.emp_no=c.cust_repid;
+
+
