@@ -1,0 +1,207 @@
+============================================================================================
+			2. QUERIES USING GROUP FUNCTIONS:
+============================================================================================
+[44] Find total number of employees.
+	select count(*) as "total_emp" from emp;
+
+[45] Find sum & average of salary of all the employees.
+	select sum(emp_salary) as "SUM",avg(emp_salary) as "AVERAGE" 
+	from emp;
+
+[46] Find the highest & the lowest salary drawn by an employee.
+	select min(emp_salary) as minimum,max(emp_salary) as maximum
+	from emp;
+	
+[47] Find average of earnings of all the employees.
+	select avg(emp_salary+nvl(emp_comm,0)) as "Average_Earning"
+	from emp;
+	
+[48] Find total number of employees earning more than 2000.
+	select count(*) as total_no_of 
+	from emp where emp_salary+nvl(emp_comm,0)>2000;	
+
+[49] Find total salary of all employees of DEPTNO 10.
+	select sum(emp_salary) as total 
+	from emp where dept_no=10;	
+
+[50] Find total number of employees who do not get any commission.
+	select count(*) as count 
+	from emp where emp_comm is null or emp_comm<=0;
+	
+[51] Find total number of orders that are not having any commission plan.
+	select count(*) as count 
+	from ordertbl where ord_comi_plan is null;		
+
+[52] Find total number of CLERKs in the company.
+	select count(*) as count
+	from emp where emp_job='clerk';	
+
+[53] Find total salary of all the MANAGERs.
+	select sum(emp_salary) as total_salary
+	from emp where emp_job='manager';	
+
+[54] Find total number of jobs in the company.
+	select count(distinct(emp_job)) as total_jobs
+	from emp;
+
+[55] Find sum of salary of employees of each department.
+	select dept_no,sum(emp_salary) as salary_as_dept
+	from emp group by dept_no;                      
+	
+[56] Find total number of employees in each department.
+	select dept_no,count(*) as count              
+	from emp group by dept_no;
+
+[57] Find total number of CLERKs in each department.
+	select dept_no,count(*) as count
+	from emp where emp_job='clerk'
+	group by dept_no;
+
+[58] Find total number of jobs in each department.
+	select dept_no,count(distinct(emp_job)) as count
+	from emp group by dept_no;
+
+[59] Find total number of employees in each job of each department.
+	select emp_job,dept_no,count(*) as emp_count        
+	from emp group by dept_no,emp_job;
+
+[60] Find CUSTID and total number of orders placed.
+	select cust_id,count(*) as count_order from     
+	ordertbl group by cust_id;	
+
+[61] Find total order amount of each product. 
+	select prod_id,sum(item_tot) as sum
+	from item group by prod_id;	
+
+[62] Find total quantity of each product ordered.    
+	select item_id,sum(item_qty) as total_qty
+	from item group by item_id;
+
+[63] Find total number of items ordered in each order.
+	select ord_id,count(prod_id)
+	from item
+	group by ord_id;	
+
+[64] Find total number of orders that were placed in each month of the year 1987.
+	select count(*) as total_no_orders,extract(month from ord_date) as "month" from ordertbl
+	where extract(year from ord_date) = 1987
+	group by extract(month from ord_date);	
+
+[65] Find total number of employees joined in each year.
+	select distinct extract(year from emp_hire_date) as year,count(*) as count from emp
+	group by extract(year from emp_hire_date);	
+
+[66] Find total number of CLERKs joined in each year.
+	select count(*) as count,extract(year from emp_hire_date) as year from emp
+	where emp_job='clerk'
+	group by extract(year from emp_hire_date);	
+
+[67] Find total number of orders ordered in each year.
+	select count(*) as total_orders,extract(year from emp_hire_date) as year from emp
+	group by extract(year from emp_hire_date);
+	
+[68] Find total number of customers residing in each area.
+	select count(*) as count,cust_area as area from customer
+	group by cust_area;
+
+[69] Find total order amount for each year.
+	select sum(ord_totl_amt) as total,extract(year from ord_ship_date) as year from ordertbl
+	group by extract(year from ord_ship_date);
+	
+[70] Find total number of orders in each COMMPLAN.
+	select count(*) as total_order,ord_comi_plan as plan 
+	from ordertbl
+	where ord_comi_plan is not null
+	group by ord_comi_plan;
+
+[71] Find average price of each product ordered.----------(baki)
+	select prod_id,avg(item_act_price) as average  
+	from item
+	group by prod_id;
+
+[72] Find DEPTNO in which there are more than 3 employees.
+	select dept_no,count(*) as no_of_emp 
+	from emp 
+	group by dept_no
+	having count(*)>3;
+	
+[73] Find dates on which 2 or more than 2 orders were placed.
+	select ord_date,count(*) as no_of_order
+	from ordertbl
+	group by ord_date
+	having count(*)>=2;
+
+[74] Find CUSTID who placed more than 3 orders.
+	select cust_id,count(*) as no_of_order
+	from ordertbl
+	group by cust_id
+	having count(*)>3;
+
+[75] Find PRODID, which has been ordered for more than 6 times.
+	select prod_id,count(*) as no_of_order
+	from item
+	group by prod_id
+	having count(*)>6;
+
+[76] Find ORDID in which more than 3 items were ordered.
+	select ord_id,count(*) as no_of_order
+	from item
+	group by ord_id
+	having count(*)>3;
+
+[77] Find DEPTNO in which there are 2 or more than 2 CLERKs.
+	select dept_no,count(emp_job) as no_of_clerks
+	from emp
+	where emp_job='clerk'
+	group by dept_no
+	having count(*)>=2;
+(or)
+	select dept_no,count(*) as no_of_clerks
+	from emp
+	where emp_job='clerk'
+	group by dept_no
+	having count(*)>=2;
+
+[78] Find EMPNO and total number of subordinates to it (Note: Find only those EMPNO that has at least one subordinate i.e. those who are manager of some employee).
+	select emp_mgr,count(emp_mgr) as no_of_subord
+	from emp
+	where emp_mgr is not null
+	group by emp_mgr;
+	
+[79] Find DEPTNO whose employees’ total salary is more than 10,000.
+	select dept_no,sum(emp_salary) as total_salary
+	from emp
+	group by dept_no
+	having sum(emp_salary)>10000;
+
+[80] Find DEPTNO in which there are 3 or more than 3 distinct jobs.
+	select dept_no,count(distinct(emp_job)) as emp_job
+	from emp
+	group by dept_no
+	having count(distinct(emp_job))>=3;
+
+[81] Find EMPNO of all the employees who have more than 2 subordinates.
+	select emp_mgr,count(emp_mgr) as no_of_subord
+	from emp
+	where emp_mgr is not null
+	group by emp_mgr
+	having count(*)>2;
+
+[82] Find DEPTNO-wise sum of salaries in the descending order of the total salaries.
+	select dept_no,sum(emp_salary) as total_salary
+	from emp
+	group by dept_no
+	order by sum(emp_salary) desc;
+
+[83] Find DEPTNO-wise sum of salaries of all CLERKs in descending order of total salary.
+	select dept_no,sum(emp_salary) as total_salary
+	from emp
+	where emp_job='clerk'
+	group by dept_no
+	order by sum(emp_salary) desc;
+
+[84] Find date-wise total number of orders placed in the ascending order of the total number of orders.
+	select ord_date,count(*) as total_no_ord
+	from ordertbl
+	group by ord_date
+	order by count(*) asc;
