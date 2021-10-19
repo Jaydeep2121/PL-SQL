@@ -1,0 +1,719 @@
+===========================================================================================
+			3. QUERIES USING SUBQUERY:
+===========================================================================================
+[85] List details of all the employees of SALES department.
+	select * from emp 
+	where dept_no =(
+		select dept_no from dept 
+		where dept_name='sales'
+	);
+	
+[86] List details of employees of departments that are located in NEW YORK.
+	select * from emp 
+	where dept_no =(
+		select dept_no from dept 
+		where dept_loc='new york'
+	);
+
+[87] List details of the employees of KING’s department.
+	select * from emp 
+	where dept_no =(
+		select dept_no from emp 
+		where emp_name='king'
+	);
+
+[88] List details of the departments that have at least one employee.
+	select * from dept
+	where dept_no in(
+		select dept_no from emp
+		group by dept_no
+		having count(*)>=1
+	);	
+
+[89] List details of the employees that have at least one customer assigned to them.
+	select * from emp
+	where emp_no in(
+		select cust_repid from customer
+		group by cust_repid
+		having count(*)>=1
+	);	
+	
+[90] List details of the employees that have at least one subordinate.
+	select * from emp
+	where emp_no in(
+		select emp_mgr from emp
+		group by emp_mgr
+		having count(*)>=1
+	);
+	
+[91] List details of the customers that have placed at least one order.
+	select * from customer
+	where cust_id in (
+		select cust_id from ordertbl
+		group by cust_id
+		having count(*)>=1
+	);	
+
+[92] List details of the products that have been ordered once.
+	select * from product
+	where prod_id in (
+		select prod_id from item
+		group by prod_id
+		having count(*)>=1
+	);
+
+[93] List details of the employees that have at least one customer assigned to them and that at least one of
+     these customers have placed at least one order. OR List those employees through whom at least one
+     order is placed.
+	select * from emp
+	where emp_no in (
+			select cust_repid
+			from customer
+			where cust_id in(
+				select cust_id
+				from ordertbl
+			)
+	);	
+
+[94] List details of the employees that are drawing same salary as the employee ‘MARTIN’ is drawing.
+	select * from
+	emp where emp_salary=(
+		select emp_salary
+		from emp where emp_name like 'martin')
+	and emp_name <> 'martin';		
+
+[95] List details of the employees that have same salary and job as the employee ‘MARTIN’ has.
+	select * from
+	emp where (emp_salary,emp_job) in (
+		select emp_salary,emp_job
+		from emp where emp_name like 'martin')
+	and emp_name <> 'martin';
+
+[96] List details of the employees of DEPTNO 20 that have salary greater than that of an employee of
+     DEPTNO 10.
+	select * from 
+	emp where dept_no=20 and 
+	emp_salary > any
+		(select emp_salary
+		 from emp 
+		 where dept_no=10
+	);			
+	
+[97] List details of the employees of DEPTNO 10 that have salary greater than that of all the employees of
+     DEPTNO 20.
+	select * from 
+	emp where dept_no=10 and 
+	emp_salary > all
+		(select emp_salary
+		 from emp 
+		 where dept_no=20
+	);
+
+[98] List details of the employees of SALES department that have salary greater than that of an employee of
+     department number 10.
+	select *
+	from emp
+	where dept_no=(select dept_no from dept where dept_name='sales') and 
+	emp_salary > any
+		(select emp_salary
+		 from emp 
+		 where dept_no=10
+	);
+	
+[99] List details of the employees of SALES department that have salary greater than that of an employee of
+     the ACCOUNTING department.
+	select *
+	from emp
+	where dept_no=(select dept_no from dept where dept_name='sales') and 
+	emp_salary > any
+		(select emp_salary
+		 from emp 
+		 where dept_no=(
+			select dept_no 
+			from dept 
+			where dept_name='accounting'
+			)
+		);
+	
+[100] List details of the employees of SALES department that have salary greater than that of all the
+      employees of the ACCOUNTING department.
+	select *
+	from emp
+	where dept_no=(select dept_no from dept where dept_name='sales') and 
+	emp_salary > all
+		(select emp_salary
+		 from emp 
+		 where dept_no=(
+			select dept_no 
+			from dept where 
+			dept_name='accounting'
+			)
+		);
+			
+[101] List details of the departments in which there are more than 3 employees.
+	select * from dept
+	where dept_no in (
+		select dept_no
+		from emp	
+		group by dept_no
+		having count(emp_no)>3
+	);
+
+[102] List details of the orders in which at least 3 items were ordered.
+	select * from ordertbl
+	where ord_id in (
+		select ord_id
+		from item
+		group by ord_id
+		having count(*)>=3
+	);
+			
+[103] List details of the products that were ordered for more than 6 times.
+	select * from product
+	where prod_id in (
+		select prod_id
+		from item
+		group by prod_id
+		having count(*)>6
+	);
+
+[104] List details of the department in which the average salary of the employees is greater than the average
+      salary of the employees of DEPTNO 20.
+	select * from dept
+	where dept_no in (
+		select dept_no from emp
+		group by dept_no
+		having avg(emp_salary)>(
+			select avg(emp_salary)
+			from emp
+			where dept_no=20
+		)
+	);		
+	
+[105] List details of the department in which the total salary of the employees is the highest.
+	select * from dept
+	where dept_no in(
+		select dept_no
+		from emp
+		group by dept_no
+		having sum(emp_salary+nvl(emp_comm,0))>= all(
+			select sum(emp_salary+nvl(emp_comm,0))
+			from emp
+			group by dept_no
+		)
+	);
+	
+[106] List details of the department in which the total salary of the employees is the lowest.
+	select * from dept
+	where dept_no in(
+		select dept_no
+		from emp
+		group by dept_no
+		having sum(emp_salary)in(
+			select min(sum(emp_salary))
+			from emp
+			group by dept_no
+		)
+	);
+
+[107] List details of the products that have highest total order amount.
+	select * from product 
+	where prod_id in (
+		select prod_id from item
+		group by prod_id 
+		having sum(item_tot)>=(
+				select max(sum(item_tot))
+				from item
+				group by prod_id					
+		)
+	);
+					
+[108] List dates on which maximum number of orders was placed.
+	select distinct(ord_date) from ordertbl
+	where ord_date in(
+			select ord_date from ordertbl
+			group by ord_date 
+			having count(ord_id)>=(
+					select max(count(ord_id))
+					from ordertbl
+					group by ord_date
+			)
+	);
+
+[109] List the months in which maximum number of orders was placed.
+	select extract(month from ord_date) as month,count(*) total_order_placed
+	from ordertbl
+	group by extract(month from ord_date)
+	having count(*) in(
+			select max(count(*))
+			from ordertbl
+			group by extract(month from ord_date)
+	);
+(or)			
+	select distinct to_char(ord_date,'month') 
+	from ordertbl
+	where to_char(ord_date,'MM') in (
+				select to_char(ord_date,'MM')
+				from ordertbl
+				group by to_char(ord_date,'MM')
+				having count(ord_id)>=(
+						select max(count(ord_id))
+						from ordertbl
+						group by to_char(ord_date,'MM')
+				)
+	);
+
+[110] List details of the department in which the average salary of the employees is the highest.
+	select * from dept
+	where dept_no in (
+		select dept_no from emp
+		group by dept_no
+		having avg(emp_salary) in(
+			select max(avg(emp_salary))
+			from emp
+			group by dept_no
+		)
+	);
+
+[111] List details of the department in which the average salary of the employees is the lowest.
+	select * from dept
+	where dept_no in (
+		select dept_no	from emp
+		group by dept_no
+		having avg(emp_salary) in(
+			select min(avg(emp_salary))
+			from emp
+			group by dept_no
+		)
+	);
+
+[112] List details of the departments in which there are more than 2 distinct jobs.
+	select * from dept 
+	where dept_no in(
+			select dept_no
+			from emp
+			group by dept_no
+			having count(distinct emp_job)>=2			
+	)
+	
+[113] List details of the customers who placed more than 3 orders.
+	select *
+	from customer 
+	where cust_id in (
+		select cust_id
+		from ordertbl	
+		group by cust_id
+		having count(*)>3
+	);
+
+[114] List details of the products that were ordered for more than 6 times.
+	select *
+	from product 
+	where prod_id in (
+		select prod_id
+		from item	
+		group by prod_id
+		having count(*)>6
+	);
+
+[115] List details of the orders in which more than 3 items were ordered.
+	select *
+	from ordertbl
+	where ord_id in(
+		select ord_id
+		from item	
+		group by ord_id
+		having count(*)>3
+	);
+
+[116] List details of the departments in which there are more than 1 CLERKs.
+	select *
+	from dept
+	where dept_no in(
+		select dept_no
+		from emp	
+		where emp_job='clerk'
+		group by dept_no
+		having count(*)>1
+	);
+
+[117] List details of the products whose total order amount is the highest among all the products.
+	select * from product 
+	where prod_id in (
+		select prod_id from item
+		group by prod_id 
+		having sum(item_tot)>=(
+				select max(sum(item_tot))
+				from item
+				group by prod_id					
+		)
+	);	
+
+[118] List details of the products whose total order amount is the lowest among all the products.
+	select * from product 
+	where prod_id in (
+		select prod_id from item
+		group by prod_id 
+		having sum(item_tot)<=(
+				select min(sum(item_tot))
+				from item
+				group by prod_id					
+		)
+	);
+
+[119] List details of the customers who placed an order having the highest total amount.
+	select *
+	from customer 
+	where cust_id in (		
+		select cust_id
+		from ordertbl
+		group by cust_id
+		having sum(ord_totl_amt) in(		
+				select max(sum(ord_totl_amt))
+				from ordertbl
+				group by cust_id
+		)
+	);
+
+[120] List details of the customers who placed an order having the lowest total amount.
+	select *
+	from customer 
+	where cust_id in (		
+		select cust_id
+		from ordertbl
+		group by cust_id
+		having sum(ord_totl_amt) in(		
+				select min(sum(ord_totl_amt))
+				from ordertbl
+				group by cust_id
+		)
+	);
+
+[121] List details of the customers who placed an order having maximum number of items in it.
+	select *
+	from customer 
+	where cust_id in (
+		select cust_id
+		from ordertbl
+		where ord_id in (
+			select ord_id
+			from item
+			having count(*) in (	
+					select max(count(*))
+					from item 
+					group by ord_id
+			)group by ord_id	
+		)	
+	);
+	
+[122] List details of the customers who placed an order having least number of items in it.
+	select *
+	from customer 
+	where cust_id in (
+		select distinct cust_id
+		from ordertbl
+		where ord_id in (
+			select ord_id
+			from item
+			having count(*) in (	
+					select min(count(*))
+					from item 
+					group by ord_id
+			)group by ord_id
+		)
+	);
+
+[123] List details of the employees who have maximum number of customers assigned to them.
+	select * from emp
+	where emp_no in(
+		select cust_repid
+		from customer 
+		having count(*) in(
+			select max(count(*)) 
+			from customer
+			group by cust_repid	
+		)group by cust_repid
+	);
+
+[124] List details of the employees who have maximum number of subordinates to them.
+	select * from emp
+	where emp_no in(
+		select emp_mgr from emp
+		group by emp_mgr
+		having count(*) in(	
+			select max(count(*))  
+			from emp
+			group by emp_mgr
+		)
+	);
+
+[125] List the year in which maximum number of employees joined the company.
+	select count(*) as no_of_emp_join,extract(year from emp_hire_date) as year
+	from emp 
+	group by extract(year from emp_hire_date)
+	having count(*) in (	
+			select max(count(*))
+			from emp
+			group by extract(year from emp_hire_date)
+	);
+	
+[126] List details of the departments in which there are maximum number of CLERKs.
+	select * from dept
+	where dept_no in (
+			select dept_no 
+			from emp
+			where emp_job='clerk'
+			group by dept_no
+			having count(*) in (
+				select max(count(*))
+				from emp	
+				where emp_job='clerk'
+				group by dept_no
+			)
+	);
+
+[127] List details of the customer(s) who placed the first order.
+	select *
+	from customer 
+	where cust_id in (
+		select cust_id 
+		from ordertbl
+		where ord_date in (
+			select min(ord_date)
+			from ordertbl
+		)
+	);
+
+[128] List details of the customer(s) who placed the last order.
+	select *
+	from customer 
+	where cust_id in (
+		select cust_id 
+		from ordertbl
+		where ord_date in (
+			select max(ord_date)
+			from ordertbl
+		)
+	);
+			
+[129] List details of the employees who were the first to join the company.
+	select *
+	from emp 
+	where emp_no in (
+		select emp_no 
+		from emp
+		where emp_hire_date in (
+			select min(emp_hire_date)
+			from emp
+		)
+	);
+
+[130] List details of the employees who were the last to join the company.
+	select *
+	from emp 
+	where emp_no in (
+		select emp_no 
+		from emp
+		where emp_hire_date in (
+			select max(emp_hire_date)
+			from emp
+		)
+	);
+
+[131] List details of the order(s) that was placed first.
+	select *
+	from ordertbl
+	where ord_date in (
+		select min(ord_date)
+		from ordertbl
+	);
+
+[132] List details of the order(s) that was placed last.
+	select *
+	from ordertbl
+	where ord_date in (
+		select max(ord_date)
+		from ordertbl
+	);
+
+[133] List details of the order(s) in which highest number of items are there.
+	select *
+	from ordertbl
+	where ord_id in(
+		select ord_id
+		from item
+		group by ord_id
+		having count(*) in(
+			select max(count(*))
+			from item
+			group by ord_id
+		)
+	);
+
+[134] List details of the order(s) in which lowest number of items are there.
+	select *
+	from ordertbl
+	where ord_id in(
+		select ord_id
+		from item
+		group by ord_id
+		having count(*) in(
+			select min(count(*))
+			from item
+			group by ord_id
+		)
+	);
+
+[135] List details of the products that were ordered in the first order.
+	select *
+	from product 
+	where prod_id in (
+		select prod_id
+		from item
+		where ord_id in (
+			select ord_id
+			from ordertbl
+			where ord_date in (
+				select min(ord_date)
+				from ordertbl
+			)
+		)
+	);
+
+[136] List details of the products that were ordered in the last order.
+	select *
+	from product 
+	where prod_id in (
+		select prod_id
+		from item
+		where ord_id in (
+			select ord_id
+			from ordertbl
+			where ord_date in (
+				select max(ord_date)
+				from ordertbl
+			)
+		)
+	);
+
+[137] List details of the products that have been ordered the most (in terms of quantity).
+	select *
+	from product 
+	where prod_id in (
+		select prod_id
+		from item
+		where ord_id in (
+				select ord_id
+				from item
+				group by ord_id
+				having sum(item_qty) in (
+					select max(sum(item_qty))
+					from item
+					group by ord_id
+				)
+		)
+	);
+
+[138] List details of the products that have been ordered the least (in terms of quantity).
+	select *
+	from product 
+	where prod_id in (
+		select prod_id
+		from item
+		where ord_id in (
+				select ord_id
+				from item
+				group by ord_id
+				having sum(item_qty) in (
+					select min(sum(item_qty))
+					from item
+					group by ord_id
+				)
+		)
+	);
+
+[139] List details of the employees whose customer placed the first order.
+	select * 
+	from emp 
+	where emp_no in (
+		select cust_repid 
+		from customer 
+		where cust_id in (
+			select cust_id
+			from ordertbl
+			where ord_date in (
+				select min(ord_date)
+				from ordertbl
+			)
+		)
+	);
+
+[140] List details of the employees whose customer placed the last order.
+	select * 
+	from emp 
+	where emp_no in (
+		select cust_repid 
+		from customer 
+		where cust_id in (
+			select cust_id
+			from ordertbl
+			where ord_date in (
+				select max(ord_date)
+				from ordertbl
+			)
+		)
+	);
+
+[141] List details of the MANAGER who was the first to join.
+	select *
+	from emp
+	where emp_no in(
+		select emp_mgr
+		from emp 
+		where emp_hire_date in(
+			select min(emp_hire_date)
+			from emp
+		)
+	);
+	
+[142] List details of the MANAGER who was the last to join.
+	select *
+	from emp
+	where emp_no in(
+		select emp_mgr
+		from emp 
+		where emp_hire_date in(
+			select max(emp_hire_date)
+			from emp
+		)
+	);
+	
+[143] List details of the orders having total order amount greater than the average order amount.
+	select *
+	from ordertbl
+	where ord_totl_amt > (		
+			select avg(ord_totl_amt)
+			from ordertbl
+	);
+
+[144] List the month and year in which maximum number of employees joined the company.
+	select to_char(emp_hire_date,'Mon-YYYY'),count(*)
+	from emp
+	group by to_char(emp_hire_date,'Mon-YYYY')
+	having count(*) in(
+			select max(count(*))
+			from emp
+			group by to_char(emp_hire_date,'Mon-YYYY')
+	);
+
+[145] List details of the customers that are having maximum creditlimit.
+	select *
+    	from customer
+	where cust_credit_limit in(
+               select max(cust_credit_limit)
+               from customer
+    	);
+	
+
+	
+
