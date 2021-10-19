@@ -1,0 +1,32 @@
+============================================================================================
+			5. QUERIES USING CO-RELATED SUBQUERY:
+============================================================================================
+[165] List details of the employees having salary greater than the average salary of their corresponding
+      department.
+	select * from emp 
+	where emp_salary in (select emp_salary from emp where emp_sal>(select avg(emp_salary) from emp));
+
+[166] List details of the employees having salary greater than their manager’s salary.
+	select e.emp_no,e.emp_name 
+	from emp e,emp m 
+	where m.emp_no=e.emp_mgr and m.emp_salary<e.emp_salary;
+
+[167] List details of the departments having at least one employee.
+	select * from dept 
+	where dept_no in(select dept_no from emp);
+
+[168] List details of the departments having more than three employees.
+	select * from dept 
+	where dept_no in(select dept_no from emp group by dept_no having count(emp_no)>3);
+
+[169] List details of the employees who have at least 3 subordinates.
+	select * from emp 
+	where emp_no in(select emp_mgr from emp group by emp_mgr having count(emp_no)>3);
+
+[170] List details of the employees having at least one customer assigned to him.
+	select * from emp 
+	where emp_no in(select cust_repid from customer);
+
+[171] List details of the products that were ordered for more than 6 times.
+	select * from product 
+	where prod_id in(select prod_id from ordertbl group by prod_id having count(ord_id)>6);
