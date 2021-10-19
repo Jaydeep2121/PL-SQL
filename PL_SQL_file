@@ -1,0 +1,805 @@
+[1]Enter a custid and then display name and address of the customer if the custid exists, otherwise
+display appropriate message. Do not use Cursor and Exception.
+-------------------------------------------------------------	
+	declare
+		cname customer.cust_name%type;
+		cadd customer.cust_address%type;
+		no number;
+		rec number;
+	begin
+		no:=&no;
+		select count(no) into rec from customer where cust_id=no;
+		if (rec>0) then
+			select cust_name,cust_address into cname,cadd from customer where cust_id=no;	
+			dbms_output.put_line('Customer Name : ' || cname || ' Address  : ' ||cadd);	
+		else
+			dbms_output.put_line('Data not found....');
+		end if;
+	end;
+	/
+------------------------------------------------------------------------------------------------------------------------
+[2] Display the details of all the employees without using a cursor. (Display only empno, ename, job,
+salary and manager’s name).
+-------------------------------------------------------------
+	declare
+		myempno emp.emp_no%type;
+		myename emp.emp_name%type;
+		myjob EMP.emp_job%type;
+		mysalary EMP.emp_salary%type;
+		mgrname emp.emp_name%type;
+		total_records emp.emp_no%type;
+		t emp.emp_no%type;
+		d number(4);
+		temp number(4);
+	begin
+		select max(emp_no) INTO total_records from EMP;
+		select min(emp_no) into t from emp;
+		d:=t;
+		WHILE t <= total_records	
+		LOOP
+			select count(emp_no) into temp from emp where emp_no=t;
+			if (temp>0) then
+				SELECT e.emp_no,e.emp_name,e.emp_job,e.emp_salary,m.emp_name INTO 
+				myempno, myename, myjob, mysalary,mgrname from EMP e,emp m where e.emp_no=t and e.emp_mgr=m.emp_no and e.emp_mgr is not null;
+				dbms_output.put_line(myempno ||''|| myename || myjob || mysalary ||mgrname);
+			end if;
+			t := t + 1;
+		END LOOP;
+	end;
+	/
+------------------------------------------------------------------------------------------------------------------------
+[3] Display department details & details of each employee in every department (i.e. department wise
+    employee details). (Display only empno, ename, job & sal as details of employees). The report
+    should be in following format. (Do not use Cursor). (NOTE: Ignore Departments not having any
+    employee in the report).
+    
+	Deptno: 99 Department Name: XXXXXXXXXX Location: XXXXXXXXXX
+	Empno Name Designation Salary
+	------------------------------------------------------------------------------
+	9999 XXXXXXX XXXXXXXX 999999
+	------------------------------------------------------------------------------
+	Total Salary: 999999
+	Highest Salary: 999999
+	Lowest Salary: 999999
+	------------------------------------------------------------------------------
+-------------------------------------------------------------
+	declare
+		vempno emp.emp_no%type;
+		vename emp.emp_name%type;
+		vjob emp.emp_job%type;
+		vsal emp.emp_salary%type;
+		drec dept%rowtype;
+		dmin dept.dept_no%type;
+		dmax dept.dept_no%type;
+		emin emp.emp_no%type;
+		emax emp.emp_no%type;
+		dcnt number(2);
+		ecnt number(2);
+		totalsal number(10,2);
+		highsal number(10,2);
+		lowsal number(10,2);
+	begin
+		select min(dept_no),max(dept_no) into dmin,dmax from dept;
+		for dno in dmin..dmax
+		loop
+			select count(*) into dcnt from dept where dept_no = dno and dept_no in(select dept_no from emp);
+			if (dcnt = 1) then
+				select * into drec from dept where dept_no = dno; 
+				dbms_output.put_line('Deptno : ' || drec.dept_no || '  Department Name : ' || drec.dept_name || '  Location : ' || drec.dept_loc);
+				dbms_output.put_line('Empno Ename Designation Salary');
+				dbms_output.put_line('------------------------------');
+				select min(emp_no),max(emp_no) into emin,emax from emp where dept_no = drec.dept_no;
+				for eno in emin..emax
+				loop
+					select count(*) into ecnt from emp where dept_no = drec.dept_no and emp_no = eno;
+					if (ecnt = 1) then
+						select emp_no,emp_name,emp_job,emp_salary into vempno,vename,vjob,vsal from emp where dept_no = drec.dept_no and emp_no = eno;
+						dbms_output.put_line(rpad(vempno,5) || rpad(vename,11) || rpad(vjob,10) || rpad(vsal,8));
+					end if;
+				end loop;
+				dbms_output.put_line('------------------------------');
+				select sum(emp_salary),max(emp_salary),min(emp_salary) into totalsal,highsal,lowsal from emp where dept_no = drec.dept_no;
+				dbms_output.put_line('        Total Salary : ' || totalsal);
+				dbms_output.put_line('      Highest Salary : ' || highsal);
+				dbms_output.put_line('       Lowest Salary : ' || lowsal);
+				dbms_output.put_line('------------------------------');
+			end if; 
+		end loop;
+	end;
+	/
+------------------------------------------------------------------------------------------------------------------------
+[4] Rewrite the code in ques. 2 using cursors. (Do not use FOR loop and parameterised cursor).
+-------------------------------------------------------------
+DECLARE
+	em emp.empno%type;
+	en emp.ename%type;
+	j emp.job%type;
+	m emp.mgr%type;
+	h emp.hiredate%type;
+	s emp.sal%type;
+	c emp.comm%type;
+	d emp.deptno%type;
+	CURSOR c1 IS select empno,ename,job,mgr,hiredate,sal,comm,deptno from emp;
+BEGIN
+	OPEN c1;
+	LOOP
+		FETCH c1 into em,en,j,m,h,s,c,d;
+	EXIT WHEN c1%notfound;
+	dbms_output.put_line(em||' '||en||' '||j||' '||m||' '||h||' '||s||' '||c||' '||d);
+END LOOP;
+CLOSE c1;	
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[5] Rewrite the code in ques. 3 using cursors. (Do not use FOR loop and parameterised cursor).
+-------------------------------------------------------------
+DECLARE
+	CURSOR c_dept IS select deptno,dname,loc from DEPT;
+	CURSOR c_emp IS select empno,ename,deptno,sal,job from EMP;
+	d c_dept%rowtype;
+	f c_emp%rowtype;
+	var_total emp.sal%type;
+	var_max emp.sal%type;
+	var_min emp.sal%type;
+BEGIN
+	OPEN c_dept;	
+	LOOP
+		FETCH c_dept INTO d;
+			dbms_output.put_line('dept no'||d.deptno||'      '||'department name'||' '||d.dname||'   '||'location'||' '||d.loc);
+		EXIT WHEN c_dept%notfound;
+		dbms_output.put_line('empno'||'    '||'ename'||'    '||'sal'||'designation');
+		dbms_output.put_line('------------------------------------------------------------');
+		OPEN c_emp;
+		LOOP
+			FETCH c_emp INTO f; 
+			EXIT WHEN c_emp%notfound;
+			if f.deptno = d.deptno then
+				dbms_output.put_line(f.empno ||'    '|| f.ename||'    '||f.sal||' '||f.job);	
+			end if;
+		END LOOP;
+		CLOSE c_emp;
+		select sum(sal),max(sal),min(sal) into var_total,var_max,var_min from emp where deptno = d.deptno;
+		dbms_output.put_line('total salary'||'    '||var_total);
+		dbms_output.put_line('maximum salary'||'    '||var_max);
+		dbms_output.put_line('minimum salary'||'    '||var_min);
+	END LOOP;
+	CLOSE c_dept;
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[6] Rewrite the code in ques. 2 using cursors (use FOR loop and parameterised cursor).
+-------------------------------------------------------------
+DECLARE
+	em emp.empno%type;
+	en emp.ename%type;
+	j emp.job%type;
+	m emp.mgr%type;
+	h emp.hiredate%type;
+	s emp.sal%type;
+	c emp.comm%type;
+	d emp.deptno%type;
+	i number;
+	k number;
+	z number;
+	CURSOR c1(k number,z number) IS select * from emp where empno BETWEEN k AND z;
+BEGIN
+	select min(empno) into k from emp;
+	select max(empno) into z from emp;
+	OPEN c1(k,z);
+	FOR i in k..z 
+	LOOP
+		FETCH c1 into em,en,j,m,h,s,c,d;
+	EXIT WHEN c1%notfound;
+	dbms_output.put_line(em||' '||en||' '||j||' '||m||' '||h||' '||s||' '||c||' '||d);
+END LOOP;
+CLOSE c1;	
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[7] Rewrite the code in ques. 3 using cursors (use FOR loop and parameterised cursor).
+-------------------------------------------------------------
+DECLARE
+	CURSOR c_dept(k number,z number) IS select deptno,dname,loc from DEPT;
+	CURSOR c_emp(i number,j number) IS select empno,ename,deptno,sal,job from EMP;
+	d c_dept%rowtype;
+	f c_emp%rowtype;
+	var_total emp.sal%type;
+	var_max emp.sal%type;
+	var_min emp.sal%type;
+	k number;
+	z number;
+	y number;
+	j number;
+BEGIN
+	select min(deptno) into k from dept;
+	select max(deptno) into z from dept;
+	OPEN c_dept(k,z);
+	FOR i in k..z	
+	LOOP
+		FETCH c_dept INTO d;
+			dbms_output.put_line('dept no'||d.deptno||'      '||'department name'||' '||d.dname||'   '||'location'||' '||d.loc);
+		EXIT WHEN c_dept%notfound;
+		dbms_output.put_line('empno'||'    '||'ename'||'    '||'sal'||'designation');
+		dbms_output.put_line('------------------------------------------------------------');
+		select min(empno) into y from emp;
+		select max(empno) into j from emp;
+		OPEN c_emp(y,j);
+		FOR b in y..j
+		LOOP
+			FETCH c_emp INTO f; 
+			EXIT WHEN c_emp%notfound;
+			if f.deptno = d.deptno then
+				dbms_output.put_line(f.empno ||'    '|| f.ename||'    '||f.sal||' '||f.job);	
+			end if;
+		END LOOP;
+		CLOSE c_emp;
+		select sum(sal),max(sal),min(sal) into var_total,var_max,var_min from emp where deptno = d.deptno;
+		dbms_output.put_line('total salary'||'    '||var_total);
+		dbms_output.put_line('maximum salary'||'    '||var_max);
+		dbms_output.put_line('minimum salary'||'    '||var_min);
+	END LOOP;
+	CLOSE c_dept;
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[8] Display employee wise, customer wise order details as shown in the following format:
+	Empno: 9999 Name: XXXXXX Deptno: 99 Dept Name: XXXXX
+	Custid Name City
+	-------------------------------------------------------------------
+	999999 XXXXXXXXX XXXXXXXX
+	Ordid OrderDate OrderAmount
+	---------------------------------------------------------
+	9999 99/99/9999 999999.99
+	9999 99/99/9999 999999.99
+	--------------------------------------------------------
+	Total Amount: 9999999.99
+	--------------------------------------------------------
+	and so on...
+	999999 XXXXXXXXX XXXXXXXX
+	Ordid OrderDate OrderAmount
+	---------------------------------------------------------
+	9999 99/99/9999 999999.99
+	9999 99/99/9999 999999.99
+	--------------------------------------------------------
+	Total Amount: 9999999.99
+	-------------------------------------------------------- and so on...
+	and so on…
+-------------------------------------------------------------
+DECLARE
+	CURSOR c_emp IS select e.empno,e.ename,e.deptno,d.dname from EMP e,dept d where e.deptno=d.deptno;
+	CURSOR c_cust IS select c.cust_id,c.name,c.city,c.repid from customer c,emp e where c.repid=e.empno;
+	CURSOR c_o IS select o.ordid,o.orderdate,o.total,o.custid from ord o,customer c where o.custid=c.cust_id;
+	f c_emp%rowtype;
+	z c_cust%rowtype;
+	q c_o%rowtype;
+	r ord.total%type;	
+BEGIN
+	OPEN c_emp;	
+	LOOP
+		FETCH c_emp INTO f;
+		exit when c_emp%notfound;
+		dbms_output.put_line('empno'||f.empno||'    '||'name'||'    '||f.ename||'deptno'||' '||f.deptno||'   '||'deptname'||'      '||f.dname);
+		dbms_output.put_line('custid'||'  '||'name'||'   '||'city');
+		dbms_output.put_line('------------------------------------------');
+		OPEN c_cust;
+		LOOP
+			FETCH c_cust into z;
+			exit when c_cust%notfound;
+			if z.repid=f.empno then
+				dbms_output.put_line(z.cust_id||'       '||z.name||' '||z.city);
+				dbms_output.put_line('                 '||'ordid'||'   '||'orderdate'||'    '||'ordertotal');
+				dbms_output.put_line('----------------------------------');
+				OPEN c_o;
+				LOOP
+					FETCH c_o into q;
+					exit when c_o%notfound;
+					if q.custid=z.cust_id then
+						dbms_output.put_line(q.ordid||'    '||q.orderdate||'   '||q.total);
+					end if;
+				END LOOP;
+				dbms_output.put_line('---------------------------------------');
+				close c_o;
+				select sum(total) into r from ord where custid=z.cust_id;
+				dbms_output.put_line('order total'||' '||r);
+				dbms_output.put_line('----------------------------------------');
+			end if;
+		END LOOP;
+		close c_cust;
+	END LOOP;
+	close c_emp;
+END;
+/
+
+------------------------------------------------------------------------------------------------------------------------
+[9] Generate representative-wise (representative is an employee through whom the customers place
+    order) report in following format:
+	Empno: 9999 Name: XXXXXX Deptno: 99 Dept Name: XXXXX
+	------------------------------------------------------------------------------------------------
+	CustId CustName Total Orders Total Order Amount
+	------------------------------------------------------------------------------------------------
+	999999 XXXXXXXXXX 999 9,99,999.99
+-------------------------------------------------------------
+DECLARE
+
+	minsal EMP.sal%type;
+	maxsal EMP.sal%type;
+	totsal EMP.sal%type;
+	temp1 number;
+	temp2 number;
+	totamount number;
+	totord number;
+	d dept.deptno%type;
+	cursor c_dept(d dept.deptno%type)
+	IS
+	Select dname from dept Where deptno=d;
+	e emp.empno%type;
+	cursor c_emp
+	IS
+	Select empno,ename,deptno from emp Where empno<=e ;
+	cursor c_cust(e emp.empno%type)
+	IS
+	Select custid,name,city from customer Where repid=e;
+	cursor c_ord(c Ord.custid%type)
+	IS
+	Select orderid,orderdate,total from ord where custid=c;
+	cursor c_Ordertot(o item.ordid%type)
+	IS
+	Select count(*) from item where Ordid=o;
+BEGIN
+	totamount:=0;
+	totord:=0;
+	select max(deptno) into d from dept;
+	
+		select max(empno) into e from emp;
+		for c1 in c_emp
+		
+		loop
+			for c in c_dept(c1.deptno)
+			loop
+			SELECT count(Repid) into temp1 from customer where repid = c1.empno;
+			if temp1 > 0 then
+			dbms_output.put_line('Empno:'||c1.empno||'  Emp Name:'||c1.ename ||'   Deptno:'||c1.deptno || '   Department Name:'||c.dname);
+			dbms_output.put_line('Customer id   '||'Customer Name   '||'City');
+			end if;
+			end loop;	
+		
+		for c3 in c_cust(c1.empno)
+		loop
+			SELECT count(custid) into temp2 from ord where custid = c3.custid;
+			if temp2 > 0 then
+			dbms_output.put_line(c3.custid || '       '||c3.name || '        '|| c3.city);
+			for c4 in c_ord(c3.custid)
+			loop
+				
+				for c5 in c_Ordertot(c4.orderid)
+				loop
+					totord:=totord+1;
+					totamount:=totamount+c4.total;
+				end loop;
+			end loop;
+				dbms_output.put_line('---------------------------------------------');
+				dbms_output.put_line('TotalOrder:'||totord ||'    TotalAmount:'||totamount);
+				totord:=0;
+				totamount:=0;
+				dbms_output.put_line('---------------------------------------------');
+				totamount:=0;
+		end if;
+		end loop;
+		
+		end loop;
+
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[10] Write a stored procedure that accepts deptno as an argument and then displays the report as in ques.
+     3 for this deptno.
+-------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE REPORT_10(DNO IN NUMBER) AS
+	DEPT_NO DEPT.DEPTNO%TYPE;	
+	DEPT_NAME DEPT.DNAME%TYPE;
+	DEPT_LOC DEPT.LOC%TYPE;
+	CURSOR C_EMP(DEPT_NO number) IS SELECT EMPNO, ENAME, JOB, SAL FROM EMP WHERE DEPTNO = DEPT_NO;	
+	EMP_NO EMP.EMPNO%TYPE;
+	EMP_NAME EMP.ENAME%TYPE;
+	EMP_DESIG EMP.JOB%TYPE;
+	EMP_SAL EMP.SAL%TYPE;
+	TOT_SAL NUMBER;
+BEGIN
+	SELECT DEPTNO,DNAME,LOC INTO DEPT_NO,DEPT_NAME,DEPT_LOC FROM DEPT WHERE DEPTNO = DNO;
+ 	DBMS_OUTPUT.PUT_LINE('Departmet Number:' || DEPT_NO || 'Department Name:' || DEPT_NAME || 'Location:'|| DEPT_LOC);
+	DBMS_OUTPUT.PUT_LINE('Empno        Name         Designation          Salary');
+	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------');
+	OPEN C_EMP(DNO);
+	TOT_SAL:=0;
+	LOOP
+		FETCH C_EMP INTO EMP_NO, EMP_NAME, EMP_DESIG, EMP_SAL;
+		TOT_SAL:= TOT_SAL + EMP_SAL;
+		EXIT WHEN C_EMP%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE(EMP_NO || EMP_NAME || EMP_DESIG || EMP_SAL);
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------');
+	DBMS_OUTPUT.PUT_LINE('                         Total Salary:' ||TOT_SAL  );
+	CLOSE C_EMP;
+EXCEPTION
+	WHEN NO_DATA_FOUND THEN	
+		DBMS_OUTPUT.PUT_LINE('Department not exist');
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[11] Write a stored function that accepts empno as an argument & checks if the empno exists or not and
+     return appropriate Boolean value.
+-------------------------------------------------------------
+CREATE OR REPLACE FUNCTION fun_empexist(varempid IN number) 
+RETURN number IS
+	dummyempid number;
+BEGIN
+	SELECT empno INTO dummyempid FROM EMP WHERE empno = varempid;
+	RETURN 1;
+
+EXCEPTION
+	WHEN NO_DATA_FOUND THEN
+		RETURN 0;
+END;
+/
+calling a function
+Declare
+N number(4);
+Begin
+N:=fun_empexist(7844);
+Dbms_output.put_line(N);
+End;
+/
+------------------------------------------------------------------------------------------------------------------------
+[12] Create a table Letter(deptno number(2), dept_name varchar2(20), last_letter_no number(4)). Write a
+     function Gen_Letter_no(deptno, year_flag, subject_ref) which will generate letter number as per the
+     following examples:
+	Gen_Letter_no(10, ‘Y’, NULL) COMP/11-12/1202
+	Gen_Letter_no(20, ‘Y’, ‘ASALES’) ACCOUNTS/11-12/SALES/1001
+	Gen_Letter_no(20, ‘Y’, ‘BSALES’) ACCOUNTS/SALES/11-12/1002
+	Gen_Letter_no(10, NULL, NULL) COMP/1203
+	Gen_Letter_no(10, NULL, ‘ATENDER’) COMP/TENDER/1204
+	Gen_Letter_no(10, NULL, ‘BTENDER’) COMP/TENDER/1205
+	i.e. for deptno argument take the corresponding department name from Letter table (assuming that
+	the deptno exist in the table), and
+	• if year_flag is ‘Y’ then depending on the current system date take the current financial year
+	• subject_ref: the first character will be either A or B which would mean that the subject
+	  name should come After the year or Before the year (if year exists, i.e. if year_flag is ‘Y’)
+	  in the letter number, if year_flag is not ‘Y’ then the first character will have no effect
+	• finally, the last number is the last_letter_no+1 for the corresponding deptno fetched from
+	  Letter table and this new letter number (the numeric part only) must be updated in Letter
+	  table.
+-------------------------------------------------------------
+CREATE OR REPLACE FUNCTION Gen_Letter(dno In number,year_flag In varchar2,subject_ref  in varchar2 )
+	RETURN varchar2 IS
+	dname varchar2(40);
+	l varchar2(10);
+	str varchar(50);
+	y varchar2(10);
+	c number;
+		
+BEGIN
+	
+	for c in(select dept_name,last_latter_no into dname,l from Letter where deptno=dno)
+		loop
+		dname:=c.dept_name;
+		l:=c.last_latter_no;
+	if year_flag='Y' and (substr(subject_ref,1,1)='A')   then	
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||y||'/'||subject_ref||'/'||l;
+		return str;
+		
+	end if;
+
+	if year_flag='Y' and (substr(subject_ref,1,1)='B') then		
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||subject_ref||'/'||y||'/'||l;
+		return str;
+	end if;
+		
+	if year_flag='Y' and (subject_ref  is NULL) then	
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||y||'/'||l;
+		return str;
+	end if;
+	
+	if year_flag is NULL and (subject_ref  is not  NULL) then		
+		str:=dname||'/'||subject_ref||'/'||l;
+		return str;
+	end if;
+
+	if year_flag is NULL and (subject_ref  is NULL) then		
+		str:=dname||'/'||l;
+		return str;
+	end if;
+	end loop;
+		
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[13] Write a package that will include the procedure & functions written in ques. 9, 10 and 11.
+-------------------------------------------------------------
+Package Specification:
+CREATE OR REPLACE Package pkg AS
+	Procedure Dis_Emp(DNO IN NUMBER);
+	Function emp_exist(eno IN number) RETURN NUMBER;
+	e emp.empno%type;
+	FUNCTION Gen_Letter(dno In number,year_flag In varchar2,subject_ref  in varchar2 ) RETURN Varchar2;
+End;
+/
+
+Package Body:
+CREATE OR REPLACE PACKAGE BODY pkg AS
+	
+	procedure Dis_Emp(DNO IN NUMBER) AS
+	DEPT_NO DEPT.DEPTNO%TYPE;	
+	DEPT_NAME DEPT.DNAME%TYPE;
+	DEPT_LOC DEPT.LOC%TYPE;
+	CURSOR C_EMP(DEPT_NO number) IS SELECT EMPNO, ENAME, JOB, SAL FROM EMP WHERE DEPTNO = DEPT_NO;	
+	EMP_NO EMP.EMPNO%TYPE;
+	EMP_NAME EMP.ENAME%TYPE;
+	EMP_DESIG EMP.JOB%TYPE;
+	EMP_SAL EMP.SAL%TYPE;
+	TOT_SAL NUMBER;
+	
+	
+	
+	BEGIN
+	SELECT DEPTNO,DNAME,LOC INTO DEPT_NO,DEPT_NAME,DEPT_LOC FROM DEPT WHERE DEPTNO = DNO;
+ 	DBMS_OUTPUT.PUT_LINE('Departmet Number:' || DEPT_NO || 'Department Name:' || DEPT_NAME || 'Location:'|| DEPT_LOC);
+	DBMS_OUTPUT.PUT_LINE('Empno        Name         Designation          Salary');
+	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------');
+	
+	OPEN C_EMP(DNO);
+	LOOP
+		FETCH C_EMP INTO EMP_NO, EMP_NAME, EMP_DESIG, EMP_SAL;
+		TOT_SAL := TOT_SAL + EMP_SAL;
+		EXIT WHEN C_EMP%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE(EMP_NO ||'   '|| EMP_NAME ||'   '|| EMP_DESIG ||'    '|| EMP_SAL);
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------');
+	DBMS_OUTPUT.PUT_LINE('                         Total Salary:' ||TOT_SAL  );
+	 Close C_EMP;	
+
+	End Dis_Emp;
+
+	FUNCTION emp_exist(eno IN number)
+    	RETURN number IS
+    	e number;
+  BEGIN
+    	Select empno into e from emp where empno=eno;
+    	return 1;
+ EXCEPTION
+   	 when no_data_found then
+    	 return 0;
+	end emp_exist;
+
+FUNCTION Gen_Letter(dno In number,year_flag In varchar2,subject_ref  in varchar2 ) RETURN Varchar2 IS
+dname varchar2(40);
+	l varchar2(10);
+	str varchar(50);
+	y varchar2(10);
+	c number;
+		
+BEGIN
+	
+	for c in(select dept_name,last_latter_no into dname,l from Letter where deptno=dno)
+		loop
+		dname:=c.dept_name;
+		l:=c.last_latter_no;
+	if year_flag='Y' and (substr(subject_ref,1,1)='A')   then	
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||y||'/'||subject_ref||'/'||l;
+		update letter set l=l+1 where deptno=dno;
+		return str;
+		
+	end if;
+
+	if year_flag='Y' and (substr(subject_ref,1,1)='B') then		
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||subject_ref||'/'||y||'/'||l;
+		update letter set l=l+1 where deptno=dno;
+		return str;
+	end if;
+		
+	if year_flag='Y' and (subject_ref  is NULL) then	
+		select (substr(sysdate,8,2) ) into y from dual;
+		y:=y||'-'||(y+1);
+		str:=dname||'/'||y||'/'||l;
+		update letter set l=l+1 where deptno=dno;
+		return str;
+	end if;
+	
+	if year_flag is NULL and (subject_ref  is not  NULL) then		
+		str:=dname||'/'||subject_ref||'/'||l;
+		update letter set l=l+1 where deptno=dno;
+		return str;
+	end if;
+
+	if year_flag is NULL and (subject_ref  is NULL) then		
+		str:=dname||'/'||l;
+		update letter set l=l+1 where deptno=dno;
+		return str;
+	end if;
+	end loop;
+	end gen_letter;
+end;
+/
+=============
+Calling Package:
+DECLARE
+	Dno number;
+	n number;
+	Eno number;
+	 d number;
+    	yf varchar2(5);
+    	sr varchar2(20);
+    	str varchar2(50);
+
+	
+BEGIN
+	
+	dbms_output.put_line('Enter DeptNo:');
+	Dno:='&Dno';
+	dbms_output.put_line(Dno);
+	pkg.Dis_Emp(Dno);
+
+	dbms_output.put_line('Enter EmpNo:');
+	Eno:='&Eno';
+	 n:=pkg.emp_exist(Eno);
+	dbms_output.put_line(n);	
+
+	
+	dbms_output.put_line('Enter DeptNo:');
+	d:='&d';
+	dbms_output.put_line('Enter Year Flag:');
+	yf:='&yf';
+	dbms_output.put_line('Enter Subject Ref:');
+	sr:='&sr';	
+	str:=pkg.gen_letter(d,yf,sr);
+	dbms_output.put_line(str);
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[14] Enter employee details and insert the data into emp table. Write all possible exceptions.
+-------------------------------------------------------------
+DECLARE
+
+	eno EMP.empno%type;
+	name EMP.ename%type;
+	job EMP.job%type;
+	mgr EMP.mgr%type;
+	hdate EMP.hiredate%type;
+	sal EMP.sal%type;
+	comm EMP.comm%type;
+	dno EMP.deptno%type;
+BEGIN
+	dbms_output.put_line('Enter Emp No:');
+	eno:='&eno';
+	dbms_output.put_line('Enter Emp Name:');
+	name:='&name';
+	dbms_output.put_line('Enter Emp Job:');
+	job:='&job';
+	dbms_output.put_line('Enter Emp MGR:');
+	mgr:='&mgr';
+	dbms_output.put_line('Enter Emp Hiredate:');
+	hdate:='&hdate';
+	dbms_output.put_line('Enter Emp Salary:');
+	sal:='&sal';
+	dbms_output.put_line('Enter Emp Commission :');
+	comm:='&comm';
+	dbms_output.put_line('Enter Emp Department No:');
+	dno:='&dno';
+
+	Insert into emp values(eno,'name',job,mgr,hdate,sal,comm,dno);
+	if sql%found then
+		dbms_output.put_line('Insrted successfully!!!');
+	else
+		dbms_output.put_line('Not insrted');
+	end if;
+EXCEPTION
+
+	WHEN DUP_VAL_ON_INDEX THEN
+		dbms_output.put_line('EmpNo should be unique!!!');
+
+
+	WHEN NO_DATA_FOUND THEN
+		dbms_output.put_line('No data found!!!');
+
+	WHEN OTHERS THEN	
+		dbms_output.put_line('Exception ocuur!!!');	
+
+END;
+/
+------------------------------------------------------------------------------------------------------------------------
+[15] Enter employee details and insert the data into emp table with all possible validations. (Validations:
+deptno should be valid & mgr should be valid. Also validate salary of the employee should not be
+more than that of his/her manager’s salary. Write user-defined exception for validation of salary).
+Also, write all possible exceptions.
+-------------------------------------------------------------
+DECLARE
+
+	eno EMP.empno%type;
+	name EMP.ename%type;
+	job EMP.job%type;
+	mymgr EMP.mgr%type;
+	hdate EMP.hiredate%type;
+	mysal EMP.sal%type;
+	comm EMP.comm%type;
+	dno EMP.deptno%type;
+	temp number;
+	temp1 number;
+	temp3 number;
+
+	Invalid_DeptNo EXCEPTION;
+
+	Invalid_Sal EXCEPTION;
+BEGIN
+	dbms_output.put_line('Enter Emp No:');
+	eno:='&eno';
+	dbms_output.put_line('Enter Emp Name:');
+	name:='&name';
+	dbms_output.put_line('Enter Emp Job:');
+	job:='&job';
+	dbms_output.put_line('Enter Emp MGR:');
+	mymgr:='&mymgr';
+
+	
+	dbms_output.put_line('Enter Emp Hiredate:');
+	hdate:='&hdate';
+	dbms_output.put_line('Enter Emp Salary:');
+	mysal:='&mysal';
+	select count(*)  into temp3 from emp where mymgr=empno and mysal <(select sal from emp where empno=mymgr);
+	if temp3 <=0 then
+		RAISE Invalid_Sal;
+	else
+	dbms_output.put_line('Enter Emp Commission :');
+	comm:='&comm';
+	dbms_output.put_line('Enter Emp Department No:');
+	dno:='&dno';
+	select count(*) into temp1 from dept where deptno=dno;
+	if temp1 <=0 then
+	
+		RAISE Invalid_DeptNo;
+	
+	else
+	Insert into emp values(eno,'name',job,mymgr,hdate,mysal,comm,dno);
+	if sql%found then
+		dbms_output.put_line('Insrted successfully!!!');
+	else
+		dbms_output.put_line('Not insrted');
+	end if;
+	end if;
+	end if;
+	end if;
+EXCEPTION
+	
+	
+	WHEN Invalid_DeptNo THEN
+		dbms_output.put_line('Invalid DeptNo!!!');
+
+	WHEN Invalid_Sal THEN
+		dbms_output.put_line('Salary must be less than Mgrs Salary!!!');
+
+	WHEN DUP_VAL_ON_INDEX THEN
+		dbms_output.put_line('Index column should be unique!!!');
+
+	WHEN VALUE_ERROR THEN
+		dbms_output.put_line('Data type Or Data size invalid!!!');
+
+	WHEN NO_DATA_FOUND THEN
+		dbms_output.put_line('No data found!!!');
+
+	WHEN OTHERS THEN	
+		dbms_output.put_line('Exception ocuur!!!');	
+
+END;
+/
+
+
+
+
